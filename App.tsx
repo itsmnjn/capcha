@@ -17,7 +17,7 @@ const App = (): JSX.Element => {
         showsPagination={false}
         bounces={true}
       >
-        <Home />
+        <Home swiperRef={swiperRef} />
       </Swiper>
 
       <StatusBar style="auto" />

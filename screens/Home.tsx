@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import { Pressable, SafeAreaView, Text, View } from 'react-native'
 
 import Animated, {
+  Easing,
   Extrapolate,
   interpolate,
   runOnJS,
@@ -9,21 +10,48 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated'
-import { PanGestureHandler } from 'react-native-gesture-handler'
+import { PanGestureHandler, TextInput } from 'react-native-gesture-handler'
 import { snapPoint } from 'react-native-redash'
 import { Ionicons } from '@expo/vector-icons'
 import { buttonWidth, deviceHeight } from '../lib/constants'
 import tw from '../lib/tailwind'
 import * as Haptics from 'expo-haptics'
 import Swiper from 'react-native-swiper'
+import { shadowStyle } from '../lib/styles'
+// eslint-disable-next-line tsc/config
+import { useKeyboard } from 'react-native-keyboard-height'
+import { View as AnimatedView, AnimatePresence } from 'moti'
 
 interface HomeProps {
   swiperRef: React.RefObject<Swiper>
 }
 
 const Home = ({ swiperRef }: HomeProps): JSX.Element => {
+  const didShow = (keyboardHeight: any) => {
+    console.log('Keyboard show. Height is ' + keyboardHeight)
+    // setNoteViewHeight(deviceHeight - keyboardHeight)
+  }
+
+  const didHide = () => {
+    console.log('Keyboard hide')
+    // setNoteViewHeight(0)
+    noteViewOpacity.value = withTiming(0, {
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
+    })
+    setNoteViewZIndex(0)
+  }
+
+  const [noteViewHeight, _setNoteViewHeight] = useState(500)
+  const [noteViewZIndex, setNoteViewZIndex] = useState(0)
+  const [_keyboardHeight] = useKeyboard(didShow, didHide)
+  const textInputRef = useRef()
+
   const translateY = useSharedValue(0)
+  const noteViewOpacity = useSharedValue(0)
+
   const springConfig = {
     mass: 1,
     stiffness: 225,
@@ -33,6 +61,13 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
   const createNewNote = () => {
     console.log('new note')
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    // eslint-disable-next-line tsc/config
+    textInputRef?.current.focus()
+    noteViewOpacity.value = withTiming(1, {
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
+    })
+    setNoteViewZIndex(2)
   }
 
   // eslint-disable-next-line tsc/config
@@ -81,6 +116,12 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
         [0.4, 1],
         Extrapolate.CLAMP,
       ),
+    }
+  })
+
+  const noteViewAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: noteViewOpacity.value,
     }
   })
 
@@ -133,6 +174,29 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
         </View>
       </SafeAreaView>
 
+      <View
+        style={[
+          tw`flex flex-col w-full absolute`,
+          { top: 0, zIndex: noteViewZIndex, height: noteViewHeight },
+        ]}
+      >
+        <Animated.View
+          style={[
+            tw`bg-white rounded-2xl m-4 mb-32 p-5`,
+            noteViewAnimatedStyle,
+            shadowStyle,
+            { height: '50%', top: noteViewHeight / 4 },
+          ]}
+        >
+          <TextInput
+            // eslint-disable-next-line tsc/config
+            ref={textInputRef}
+            style={[tw`flex-1 text-lg`]}
+            multiline
+          />
+        </Animated.View>
+      </View>
+
       {/* eslint-disable-next-line tsc/config */}
       <PanGestureHandler onGestureEvent={onGestureEvent}>
         <Animated.View
@@ -146,6 +210,22 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
           </Text>
         </Animated.View>
       </PanGestureHandler>
+
+      <AnimatePresence>
+        {noteViewZIndex > 0 && (
+          <AnimatedView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 0.25 }}
+            exit={{
+              opacity: 0,
+            }}
+            style={[
+              tw`absolute h-full w-full`,
+              { zIndex: 1, backgroundColor: '#000' },
+            ]}
+          />
+        )}
+      </AnimatePresence>
     </View>
   )
 }
