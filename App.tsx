@@ -15,7 +15,8 @@ const App = (): JSX.Element => {
         index={0}
         ref={swiperRef}
         showsPagination={false}
-        bounces={true}
+        bounces={false}
+        scrollEnabled={false}
       >
         <Home swiperRef={swiperRef} />
       </Swiper>
