@@ -5,6 +5,7 @@ import {
   Pressable,
   SafeAreaView,
   Text,
+  useColorScheme,
   View,
 } from 'react-native'
 
@@ -21,7 +22,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { PanGestureHandler, TextInput } from 'react-native-gesture-handler'
 import { snapPoint } from 'react-native-redash'
-import { Ionicons } from '@expo/vector-icons'
+import { Ionicons, Feather } from '@expo/vector-icons'
 import { buttonWidth, deviceHeight } from '../lib/constants'
 import tw from '../lib/tailwind'
 import * as Haptics from 'expo-haptics'
@@ -65,6 +66,8 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
 
   const noteViewOpacity = useSharedValue(0)
   const noteViewTranslateY = useSharedValue(0)
+
+  const colorScheme = useColorScheme()
 
   const springConfig = {
     mass: 1,
@@ -117,7 +120,7 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
       })
 
       setThoughtCapturedTextZIndex(-1)
-    }, 2500)
+    }, 1750)
 
     setTimeout(() => {
       noteViewTranslateY.value = 0
@@ -240,7 +243,10 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
             }}
             style={({ pressed }) => [
-              tw`bg-light-button-bg rounded-full flex justify-center items-center`,
+              tw`rounded-full flex justify-center items-center`,
+              colorScheme === 'light'
+                ? tw`bg-light-button-bg`
+                : tw`bg-dark-button-bg`,
               {
                 width: buttonWidth,
                 height: buttonWidth,
@@ -248,10 +254,16 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
               },
             ]}
           >
-            <Ionicons
-              name="ios-settings-outline"
+            <Feather
+              name="settings"
               size={24}
-              style={[tw`text-light-button`]}
+              style={[
+                tw``,
+                colorScheme === 'light'
+                  ? tw`text-light-button`
+                  : tw`text-dark-button`,
+                { left: 0.1, top: 0.25 },
+              ]}
             />
           </Pressable>
 
@@ -261,7 +273,10 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
               swiperRef.current?.scrollBy(1)
             }}
             style={({ pressed }) => [
-              tw`bg-light-button-bg rounded-full flex justify-center items-center`,
+              tw`rounded-full flex justify-center items-center`,
+              colorScheme === 'light'
+                ? tw`bg-light-button-bg`
+                : tw`bg-dark-button-bg`,
               {
                 width: buttonWidth,
                 height: buttonWidth,
@@ -269,10 +284,16 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
               },
             ]}
           >
-            <Ionicons
-              name="ios-list"
+            <Feather
+              name="list"
               size={24}
-              style={[tw`text-light-button`, { left: 1 }]}
+              style={[
+                tw``,
+                colorScheme === 'light'
+                  ? tw`text-light-button`
+                  : tw`text-dark-button`,
+                { top: 0.2 },
+              ]}
             />
           </Pressable>
         </View>
@@ -288,9 +309,11 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
         <PanGestureHandler onGestureEvent={onNoteViewGestureEvent}>
           <Animated.View
             style={[
-              tw`bg-white rounded-2xl m-4 mb-32 p-4`,
+              tw`rounded-2xl m-4 mb-32 p-4`,
+              colorScheme === 'light' ? tw`bg-white` : tw`bg-light-dark-bg`,
               noteViewAnimatedStyle,
               shadowStyle,
+              colorScheme === 'dark' && { shadowColor: '#000' },
               { height: '50%', top: noteViewHeight / 4 },
             ]}
           >
@@ -325,7 +348,12 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
               <Ionicons
                 name="ios-close"
                 size={24}
-                style={[tw`text-light-button self-end`]}
+                style={[
+                  tw`self-end`,
+                  colorScheme === 'light'
+                    ? tw`text-light-button`
+                    : tw`text-dark-button`,
+                ]}
               />
             </Pressable>
             <TextInput
@@ -333,13 +361,25 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
               onChangeText={(text) => setNoteText(text)}
               // eslint-disable-next-line tsc/config
               ref={textInputRef}
-              style={[tw`flex-1 text-lg px-1 mb-4`]}
+              style={[
+                tw`flex-1 text-lg px-1 mb-4`,
+                colorScheme === 'light'
+                  ? tw`text-black`
+                  : tw`text-dark-text-note`,
+              ]}
               maxLength={140}
               returnKeyType="done"
               blurOnSubmit
               multiline
             />
-            <Text style={[tw`self-end text-light-aux-text text-base`]}>
+            <Text
+              style={[
+                tw`self-end text-base`,
+                colorScheme === 'light'
+                  ? tw`text-light-aux-text`
+                  : tw`text-dark-aux-text`,
+              ]}
+            >
               {noteText.length}/140
             </Text>
           </Animated.View>
@@ -354,7 +394,14 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
             textAnimatedStyle,
           ]}
         >
-          <Text style={[tw`text-base text-center text-light-text`]}>
+          <Text
+            style={[
+              tw`text-base text-center`,
+              colorScheme === 'light'
+                ? tw`text-light-text`
+                : tw`text-dark-text`,
+            ]}
+          >
             Swipe down to capture a thought.
           </Text>
         </Animated.View>
@@ -367,7 +414,12 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
           { top: 0, zIndex: thoughtCapturedTextZIndex },
         ]}
       >
-        <Text style={[tw`text-base text-center text-light-text`]}>
+        <Text
+          style={[
+            tw`text-base text-center`,
+            colorScheme === 'light' ? tw`text-light-text` : tw`text-dark-text`,
+          ]}
+        >
           Thought captured.
         </Text>
       </Animated.View>
