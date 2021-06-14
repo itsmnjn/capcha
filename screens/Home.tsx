@@ -23,42 +23,40 @@ import Animated, {
 import { PanGestureHandler, TextInput } from 'react-native-gesture-handler'
 import { snapPoint } from 'react-native-redash'
 import { Ionicons, Feather } from '@expo/vector-icons'
-import { buttonWidth, deviceHeight } from '../lib/constants'
+import {
+  buttonWidth,
+  deviceHeight,
+  bottomSheetSnapPoints,
+} from '../lib/constants'
 import tw from '../lib/tailwind'
 import * as Haptics from 'expo-haptics'
-import Swiper from 'react-native-swiper'
-import { shadowStyle } from '../lib/styles'
-// eslint-disable-next-line tsc/config
-import { useKeyboard } from 'react-native-keyboard-height'
+import { bottomSheetShadowStyle, shadowStyle } from '../lib/styles'
 import { View as AnimatedView, AnimatePresence } from 'moti'
+import { Note, NoteStorage } from '../lib/types'
+import uuid from 'uuid-random'
+import {
+  BottomSheetModal,
+  BottomSheetModalProvider,
+  BottomSheetScrollView,
+} from '@gorhom/bottom-sheet'
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 
 interface HomeProps {
-  swiperRef: React.RefObject<Swiper>
+  noteStorage: NoteStorage | null
+  setNoteStorage: React.Dispatch<React.SetStateAction<NoteStorage | null>>
 }
 
-const Home = ({ swiperRef }: HomeProps): JSX.Element => {
-  const didShow = (keyboardHeight: number) => {
-    console.log('Keyboard show. Height is ' + keyboardHeight)
-    // setNoteViewHeight(deviceHeight - keyboardHeight)
-  }
-
-  const didHide = () => {
-    console.log('Keyboard hide')
-    // setNoteViewHeight(0)
-    // noteViewOpacity.value = withTiming(0, {
-    //   duration: 250,
-    //   easing: Easing.out(Easing.cubic),
-    // })
-    // setNoteViewZIndex(0)
-  }
-
+const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
   const [noteText, setNoteText] = useState('')
   const [noteViewHeight, _setNoteViewHeight] = useState(475)
   const [noteViewZIndex, setNoteViewZIndex] = useState(0)
   const [thoughtCapturedTextZIndex, setThoughtCapturedTextZIndex] = useState(-1)
 
-  const [_keyboardHeight] = useKeyboard(didShow, didHide)
+  const [bottomSheetPresented, setBottomSheetPresented] = useState(false)
+
   const textInputRef = useRef()
+  const notesListBottomSheetRef = useRef<BottomSheetModal>(null)
+  const settingsBottomSheetRef = useRef<BottomSheetModal>(null)
 
   const translateY = useSharedValue(0)
   const mainTextOpacity = useSharedValue(0.4)
@@ -73,6 +71,25 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
     mass: 1,
     stiffness: 225,
     damping: 19,
+  }
+
+  const presentBottomSheet = (
+    ref: React.RefObject<BottomSheetModalMethods>,
+  ) => {
+    ref.current?.expand()
+    ref.current?.present()
+    setBottomSheetPresented(true)
+  }
+
+  const handleBottomSheetChange = (
+    index: number,
+    ref: React.RefObject<BottomSheetModalMethods>,
+  ) => {
+    if (index === 0) {
+      ref.current?.dismiss()
+      setBottomSheetPresented(false)
+      console.log('dismissed bottom sheet modal')
+    }
   }
 
   const createNewNote = () => {
@@ -94,7 +111,6 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
       easing: Easing.out(Easing.cubic),
     })
     setNoteViewZIndex(0)
-    setNoteText('')
 
     mainTextOpacity.value = withTiming(0, {
       duration: 250,
@@ -125,6 +141,24 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
     setTimeout(() => {
       noteViewTranslateY.value = 0
     }, 100)
+
+    // actually save note
+    const noteId = uuid()
+
+    const newNote: Note = {
+      id: noteId,
+      body: noteText,
+      date: new Date(),
+    }
+
+    if (noteStorage) {
+      const newNoteStorage: NoteStorage = {
+        notes: [...noteStorage.notes, newNote],
+      }
+      setNoteStorage(newNoteStorage)
+    }
+
+    setNoteText('')
   }
 
   // eslint-disable-next-line tsc/config
@@ -233,165 +267,187 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
   })
 
   return (
-    <View style={[tw`flex-1`]}>
-      <SafeAreaView
-        style={[tw`flex flex-col w-full absolute`, { top: 0, zIndex: 1 }]}
-      >
-        <View style={[tw`px-6 pt-6 flex-row justify-between`]}>
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-            }}
-            style={({ pressed }) => [
-              tw`rounded-full flex justify-center items-center`,
-              colorScheme === 'light'
-                ? tw`bg-light-button-bg`
-                : tw`bg-dark-button-bg`,
-              {
-                width: buttonWidth,
-                height: buttonWidth,
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}
-          >
-            <Feather
-              name="settings"
-              size={24}
-              style={[
-                tw``,
-                colorScheme === 'light'
-                  ? tw`text-light-button`
-                  : tw`text-dark-button`,
-                { left: 0.1, top: 0.25 },
-              ]}
-            />
-          </Pressable>
-
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-              swiperRef.current?.scrollBy(1)
-            }}
-            style={({ pressed }) => [
-              tw`rounded-full flex justify-center items-center`,
-              colorScheme === 'light'
-                ? tw`bg-light-button-bg`
-                : tw`bg-dark-button-bg`,
-              {
-                width: buttonWidth,
-                height: buttonWidth,
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}
-          >
-            <Feather
-              name="list"
-              size={24}
-              style={[
-                tw``,
-                colorScheme === 'light'
-                  ? tw`text-light-button`
-                  : tw`text-dark-button`,
-                { top: 0.2 },
-              ]}
-            />
-          </Pressable>
-        </View>
-      </SafeAreaView>
-
-      <View
-        style={[
-          tw`flex flex-col w-full absolute`,
-          { top: 0, zIndex: noteViewZIndex, height: noteViewHeight },
-        ]}
-      >
-        {/* eslint-disable-next-line tsc/config */}
-        <PanGestureHandler onGestureEvent={onNoteViewGestureEvent}>
-          <Animated.View
-            style={[
-              tw`rounded-2xl m-4 mb-32 p-4`,
-              colorScheme === 'light' ? tw`bg-white` : tw`bg-light-dark-bg`,
-              noteViewAnimatedStyle,
-              shadowStyle,
-              colorScheme === 'dark' && { shadowColor: '#000' },
-              { height: '50%', top: noteViewHeight / 4 },
-            ]}
-          >
+    <BottomSheetModalProvider>
+      <View style={[tw`flex-1`]}>
+        <SafeAreaView
+          style={[tw`flex flex-col w-full absolute`, { top: 0, zIndex: 1 }]}
+        >
+          <View style={[tw`px-6 pt-6 flex-row justify-between`]}>
             <Pressable
-              style={({ pressed }) => [tw``, { opacity: pressed ? 0.75 : 1 }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                Alert.alert(
-                  'Warning',
-                  'Are you sure you want to cancel this thought?',
-                  [
-                    {
-                      text: 'No',
-                      style: 'cancel',
-                    },
-                    {
-                      text: 'Yes',
-                      style: 'destructive',
-                      onPress: () => {
-                        noteViewOpacity.value = withTiming(0, {
-                          duration: 250,
-                          easing: Easing.out(Easing.cubic),
-                        })
-                        setNoteViewZIndex(0)
-                        setNoteText('')
-                      },
-                    },
-                  ],
-                )
+                presentBottomSheet(settingsBottomSheetRef)
               }}
+              style={({ pressed }) => [
+                tw`rounded-full flex justify-center items-center`,
+                colorScheme === 'light'
+                  ? tw`bg-light-button-bg`
+                  : tw`bg-dark-button-bg`,
+                {
+                  width: buttonWidth,
+                  height: buttonWidth,
+                  opacity: pressed ? 0.75 : 1,
+                },
+              ]}
             >
-              <Ionicons
-                name="ios-close"
+              <Feather
+                name="settings"
                 size={24}
                 style={[
-                  tw`self-end`,
+                  tw``,
                   colorScheme === 'light'
                     ? tw`text-light-button`
                     : tw`text-dark-button`,
+                  { left: 0.1, top: 0.25 },
                 ]}
               />
             </Pressable>
-            <TextInput
-              value={noteText}
-              onChangeText={(text) => setNoteText(text)}
-              // eslint-disable-next-line tsc/config
-              ref={textInputRef}
-              style={[
-                tw`flex-1 text-lg px-1 mb-4`,
+
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                presentBottomSheet(notesListBottomSheetRef)
+              }}
+              style={({ pressed }) => [
+                tw`rounded-full flex justify-center items-center`,
                 colorScheme === 'light'
-                  ? tw`text-black`
-                  : tw`text-dark-text-note`,
-              ]}
-              maxLength={140}
-              returnKeyType="done"
-              blurOnSubmit
-              multiline
-            />
-            <Text
-              style={[
-                tw`self-end text-base`,
-                colorScheme === 'light'
-                  ? tw`text-light-aux-text`
-                  : tw`text-dark-aux-text`,
+                  ? tw`bg-light-button-bg`
+                  : tw`bg-dark-button-bg`,
+                {
+                  width: buttonWidth,
+                  height: buttonWidth,
+                  opacity: pressed ? 0.75 : 1,
+                },
               ]}
             >
-              {noteText.length}/140
+              <Feather
+                name="list"
+                size={24}
+                style={[
+                  tw``,
+                  colorScheme === 'light'
+                    ? tw`text-light-button`
+                    : tw`text-dark-button`,
+                  { top: 0.2 },
+                ]}
+              />
+            </Pressable>
+          </View>
+        </SafeAreaView>
+
+        <View
+          style={[
+            tw`flex flex-col w-full absolute`,
+            { top: 0, zIndex: noteViewZIndex, height: noteViewHeight },
+          ]}
+        >
+          {/* eslint-disable-next-line tsc/config */}
+          <PanGestureHandler onGestureEvent={onNoteViewGestureEvent}>
+            <Animated.View
+              style={[
+                tw`rounded-2xl m-4 mb-32 p-4`,
+                colorScheme === 'light' ? tw`bg-white` : tw`bg-light-dark-bg`,
+                noteViewAnimatedStyle,
+                shadowStyle,
+                colorScheme === 'dark' && { shadowColor: '#000' },
+                { height: '50%', top: noteViewHeight / 4 },
+              ]}
+            >
+              <Pressable
+                style={({ pressed }) => [tw``, { opacity: pressed ? 0.75 : 1 }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                  Alert.alert(
+                    'Warning',
+                    'Are you sure you want to cancel this thought?',
+                    [
+                      {
+                        text: 'No',
+                        style: 'cancel',
+                      },
+                      {
+                        text: 'Yes',
+                        style: 'destructive',
+                        onPress: () => {
+                          noteViewOpacity.value = withTiming(0, {
+                            duration: 250,
+                            easing: Easing.out(Easing.cubic),
+                          })
+                          setNoteViewZIndex(0)
+                          setNoteText('')
+                        },
+                      },
+                    ],
+                  )
+                }}
+              >
+                <Ionicons
+                  name="ios-close"
+                  size={24}
+                  style={[
+                    tw`self-end`,
+                    colorScheme === 'light'
+                      ? tw`text-light-button`
+                      : tw`text-dark-button`,
+                  ]}
+                />
+              </Pressable>
+              <TextInput
+                value={noteText}
+                onChangeText={(text) => setNoteText(text)}
+                // eslint-disable-next-line tsc/config
+                ref={textInputRef}
+                style={[
+                  tw`flex-1 text-lg px-1 mb-4`,
+                  colorScheme === 'light'
+                    ? tw`text-black`
+                    : tw`text-dark-text-note`,
+                ]}
+                maxLength={140}
+                returnKeyType="done"
+                blurOnSubmit
+                multiline
+              />
+              <Text
+                style={[
+                  tw`self-end text-base`,
+                  colorScheme === 'light'
+                    ? tw`text-light-aux-text`
+                    : tw`text-dark-aux-text`,
+                ]}
+              >
+                {noteText.length}/140
+              </Text>
+            </Animated.View>
+          </PanGestureHandler>
+        </View>
+
+        {/* eslint-disable-next-line tsc/config */}
+        <PanGestureHandler onGestureEvent={onGestureEvent}>
+          <Animated.View
+            style={[
+              tw`flex items-center justify-center flex-1`,
+              textAnimatedStyle,
+            ]}
+          >
+            <Text
+              style={[
+                tw`text-base text-center`,
+                colorScheme === 'light'
+                  ? tw`text-light-text`
+                  : tw`text-dark-text`,
+              ]}
+            >
+              Swipe down to capture a thought.
             </Text>
           </Animated.View>
         </PanGestureHandler>
-      </View>
 
-      {/* eslint-disable-next-line tsc/config */}
-      <PanGestureHandler onGestureEvent={onGestureEvent}>
         <Animated.View
           style={[
-            tw`flex items-center justify-center flex-1`,
-            textAnimatedStyle,
+            tw`absolute h-full w-full flex items-center justify-center`,
+            thoughtCapturedTextAnimatedStyle,
+            { top: 0, zIndex: thoughtCapturedTextZIndex },
           ]}
         >
           <Text
@@ -402,44 +458,130 @@ const Home = ({ swiperRef }: HomeProps): JSX.Element => {
                 : tw`text-dark-text`,
             ]}
           >
-            Swipe down to capture a thought.
+            Thought captured.
           </Text>
         </Animated.View>
-      </PanGestureHandler>
 
-      <Animated.View
+        <AnimatePresence>
+          {(noteViewZIndex > 0 || bottomSheetPresented) && (
+            <AnimatedView
+              from={{ opacity: 0 }}
+              animate={{ opacity: 0.25 }}
+              exit={{
+                opacity: 0,
+              }}
+              style={[
+                tw`absolute h-full w-full`,
+                { zIndex: 1, backgroundColor: '#000' },
+              ]}
+            />
+          )}
+        </AnimatePresence>
+      </View>
+
+      <BottomSheetModal
+        // eslint-disable-next-line tsc/config
+        ref={notesListBottomSheetRef}
+        onChange={(index: number) =>
+          handleBottomSheetChange(index, notesListBottomSheetRef)
+        }
+        index={1}
+        snapPoints={bottomSheetSnapPoints}
+        // eslint-disable-next-line tsc/config
         style={[
-          tw`absolute h-full w-full flex items-center justify-center`,
-          thoughtCapturedTextAnimatedStyle,
-          { top: 0, zIndex: thoughtCapturedTextZIndex },
+          tw`bg-white rounded-2xl`,
+          bottomSheetShadowStyle,
+          colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
         ]}
-      >
-        <Text
-          style={[
-            tw`text-base text-center`,
-            colorScheme === 'light' ? tw`text-light-text` : tw`text-dark-text`,
-          ]}
-        >
-          Thought captured.
-        </Text>
-      </Animated.View>
-
-      <AnimatePresence>
-        {noteViewZIndex > 0 && (
-          <AnimatedView
-            from={{ opacity: 0 }}
-            animate={{ opacity: 0.25 }}
-            exit={{
-              opacity: 0,
-            }}
+        handleComponent={() => (
+          <View
             style={[
-              tw`absolute h-full w-full`,
-              { zIndex: 1, backgroundColor: '#000' },
+              tw``,
+              colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
+              { height: 20, borderTopEndRadius: 15, borderTopStartRadius: 15 },
             ]}
           />
         )}
-      </AnimatePresence>
-    </View>
+      >
+        <View
+          style={[
+            tw`flex-1 flex-col justify-end px-4 pb-8`,
+            colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
+          ]}
+        >
+          <BottomSheetScrollView
+            contentContainerStyle={[
+              tw`flex-1`,
+              colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
+            ]}
+          >
+            {noteStorage?.notes.map((note) => (
+              <Text
+                key={note.id}
+                style={[
+                  tw`mb-2`,
+                  colorScheme === 'light'
+                    ? tw`text-light-text`
+                    : tw`text-dark-text`,
+                ]}
+              >
+                {note.body}
+              </Text>
+            ))}
+          </BottomSheetScrollView>
+        </View>
+      </BottomSheetModal>
+
+      <BottomSheetModal
+        // eslint-disable-next-line tsc/config
+        ref={settingsBottomSheetRef}
+        onChange={(index: number) =>
+          handleBottomSheetChange(index, settingsBottomSheetRef)
+        }
+        index={1}
+        snapPoints={bottomSheetSnapPoints}
+        // eslint-disable-next-line tsc/config
+        style={[
+          tw`bg-white rounded-2xl`,
+          bottomSheetShadowStyle,
+          colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
+        ]}
+        handleComponent={() => (
+          <View
+            style={[
+              tw``,
+              colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
+              { height: 20, borderTopEndRadius: 15, borderTopStartRadius: 15 },
+            ]}
+          />
+        )}
+      >
+        <View
+          style={[
+            tw`flex-1 flex-col justify-end px-4 pb-8`,
+            colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
+          ]}
+        >
+          <BottomSheetScrollView
+            contentContainerStyle={[
+              tw`flex-1`,
+              colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
+            ]}
+          >
+            <Text
+              style={[
+                tw``,
+                colorScheme === 'light'
+                  ? tw`text-light-text`
+                  : tw`text-dark-text`,
+              ]}
+            >
+              Settings!
+            </Text>
+          </BottomSheetScrollView>
+        </View>
+      </BottomSheetModal>
+    </BottomSheetModalProvider>
   )
 }
 

@@ -1,14 +1,53 @@
 import { StatusBar } from 'expo-status-bar'
-import React, { useRef } from 'react'
+import React from 'react'
 import { View, useColorScheme } from 'react-native'
 import tw from './lib/tailwind'
-import Swiper from 'react-native-swiper'
 import Home from './screens/Home'
+import { noteStorageKey } from './lib/constants'
+import { useState } from 'react'
+import { useEffect } from 'react'
+import { NoteStorage } from './lib/types'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const App = (): JSX.Element => {
-  const swiperRef = useRef<Swiper>(null)
-
   const colorScheme = useColorScheme()
+
+  const emptyNoteStorage: NoteStorage = {
+    notes: [],
+  }
+
+  const [noteStorage, setNoteStorage] = useState<NoteStorage | null>(null)
+
+  const retrieveFromStorage = async () => {
+    if (!noteStorage) {
+      const stringifiedSavedNoteStorage = await AsyncStorage.getItem(
+        noteStorageKey,
+      )
+
+      if (stringifiedSavedNoteStorage) {
+        const savedNoteStorage = JSON.parse(
+          stringifiedSavedNoteStorage,
+        ) as NoteStorage
+        setNoteStorage(savedNoteStorage)
+      } else {
+        setNoteStorage(emptyNoteStorage)
+      }
+    }
+  }
+
+  const saveToStorage = async () => {
+    if (noteStorage) {
+      await AsyncStorage.setItem(noteStorageKey, JSON.stringify(noteStorage))
+    }
+  }
+
+  useEffect(() => {
+    retrieveFromStorage()
+  }, [])
+
+  useEffect(() => {
+    saveToStorage()
+  }, [noteStorage])
 
   return (
     <View
@@ -17,16 +56,7 @@ const App = (): JSX.Element => {
         colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
       ]}
     >
-      <Swiper
-        loop={false}
-        index={0}
-        ref={swiperRef}
-        showsPagination={false}
-        bounces={false}
-        scrollEnabled={false}
-      >
-        <Home swiperRef={swiperRef} />
-      </Swiper>
+      <Home noteStorage={noteStorage} setNoteStorage={setNoteStorage} />
 
       <StatusBar style="auto" />
     </View>

@@ -22,3 +22,10 @@ export const extraLargeShadowStyle: ViewStyle = {
   shadowOffset: { width: 0, height: 6 },
   elevation: 12,
 }
+
+export const bottomSheetShadowStyle: ViewStyle = {
+  shadowColor: '#000',
+  shadowOpacity: 0.5,
+  shadowOffset: { width: 0, height: -5 },
+  elevation: 16,
+}
