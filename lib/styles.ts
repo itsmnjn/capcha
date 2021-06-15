@@ -2,7 +2,8 @@ import { ViewStyle } from 'react-native'
 
 export const shadowStyle: ViewStyle = {
   shadowColor: '#444',
-  shadowOpacity: 0.2,
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
   shadowOffset: { width: 0, height: 2 },
   elevation: 4,
 }
@@ -25,7 +26,7 @@ export const extraLargeShadowStyle: ViewStyle = {
 
 export const bottomSheetShadowStyle: ViewStyle = {
   shadowColor: '#000',
-  shadowOpacity: 0.5,
+  shadowOpacity: 0.3,
   shadowOffset: { width: 0, height: -5 },
   elevation: 16,
 }

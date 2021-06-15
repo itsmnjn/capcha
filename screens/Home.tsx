@@ -40,6 +40,7 @@ import {
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet'
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
+import { timeAgo } from '../lib/timeAgo'
 
 interface HomeProps {
   noteStorage: NoteStorage | null
@@ -369,6 +370,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
                         text: 'Yes',
                         style: 'destructive',
                         onPress: () => {
+                          Keyboard.dismiss()
                           noteViewOpacity.value = withTiming(0, {
                             duration: 250,
                             easing: Easing.out(Easing.cubic),
@@ -403,7 +405,6 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
                     ? tw`text-black`
                     : tw`text-dark-text-note`,
                 ]}
-                maxLength={140}
                 returnKeyType="done"
                 blurOnSubmit
                 multiline
@@ -416,7 +417,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
                     : tw`text-dark-aux-text`,
                 ]}
               >
-                {noteText.length}/140
+                {noteText.length}
               </Text>
             </Animated.View>
           </PanGestureHandler>
@@ -489,7 +490,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
         snapPoints={bottomSheetSnapPoints}
         // eslint-disable-next-line tsc/config
         style={[
-          tw`bg-white rounded-2xl`,
+          tw`rounded-2xl`,
           bottomSheetShadowStyle,
           colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
         ]}
@@ -505,29 +506,53 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
       >
         <View
           style={[
-            tw`flex-1 flex-col justify-end px-4 pb-8`,
+            tw`flex-1 flex-col`,
             colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
           ]}
         >
           <BottomSheetScrollView
             contentContainerStyle={[
-              tw`flex-1`,
+              tw`px-4 pt-2 pb-8`,
               colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
             ]}
           >
-            {noteStorage?.notes.map((note) => (
-              <Text
-                key={note.id}
-                style={[
-                  tw`mb-2`,
-                  colorScheme === 'light'
-                    ? tw`text-light-text`
-                    : tw`text-dark-text`,
-                ]}
-              >
-                {note.body}
-              </Text>
-            ))}
+            {noteStorage?.notes
+              .map((note) => (
+                <Pressable
+                  key={note.id}
+                  style={[
+                    tw`rounded-xl p-4 mb-4`,
+                    colorScheme === 'light'
+                      ? tw`bg-white`
+                      : tw`bg-light-dark-bg`,
+                    shadowStyle,
+                    colorScheme === 'dark' && { shadowColor: '#000' },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      tw`text-base mb-1`,
+                      colorScheme === 'light'
+                        ? tw`text-light-text`
+                        : tw`text-dark-text`,
+                    ]}
+                  >
+                    {note.body}
+                  </Text>
+
+                  <Text
+                    style={[
+                      tw`text-sm self-end text-right`,
+                      colorScheme === 'light'
+                        ? tw`text-light-aux-text`
+                        : tw`text-dark-aux-text`,
+                    ]}
+                  >
+                    {timeAgo.format(new Date(note.date), 'mini-now')}
+                  </Text>
+                </Pressable>
+              ))
+              .reverse()}
           </BottomSheetScrollView>
         </View>
       </BottomSheetModal>
@@ -558,26 +583,111 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
       >
         <View
           style={[
-            tw`flex-1 flex-col justify-end px-4 pb-8`,
+            tw`flex-1 flex-col`,
             colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
           ]}
         >
           <BottomSheetScrollView
             contentContainerStyle={[
-              tw`flex-1`,
+              tw`px-4 pt-2 pb-8`,
               colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
             ]}
           >
             <Text
               style={[
-                tw``,
+                tw`text-4xl text-center self-center mb-1 mt-4`,
                 colorScheme === 'light'
                   ? tw`text-light-text`
                   : tw`text-dark-text`,
               ]}
             >
-              Settings!
+              Capcha
             </Text>
+
+            <Text
+              style={[
+                tw`text-base text-center self-center mb-6`,
+                colorScheme === 'light'
+                  ? tw`text-light-aux-text`
+                  : tw`text-dark-aux-text`,
+              ]}
+            >
+              v1.0.0
+            </Text>
+
+            <Pressable
+              style={({ pressed }) => [
+                tw`rounded-xl p-4 mb-4 flex-row items-center`,
+                colorScheme === 'light' ? tw`bg-white` : tw`bg-light-dark-bg`,
+                shadowStyle,
+                colorScheme === 'dark' && { shadowColor: '#000' },
+                { opacity: pressed ? 0.75 : 1 },
+              ]}
+              onPress={() => {
+                Alert.alert(
+                  'Privacy Policy',
+                  'Everything is stored on your device :)',
+                )
+              }}
+            >
+              <Ionicons
+                name="ios-exit-outline"
+                size={24}
+                style={[
+                  tw`mr-3`,
+                  colorScheme === 'light'
+                    ? tw`text-light-aux-text`
+                    : tw`text-dark-aux-text`,
+                ]}
+              />
+              <Text
+                style={[
+                  tw`text-base`,
+                  colorScheme === 'light'
+                    ? tw`text-light-text`
+                    : tw`text-dark-text`,
+                ]}
+              >
+                Export
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                tw`rounded-xl p-4 mb-4 flex-row items-center`,
+                colorScheme === 'light' ? tw`bg-white` : tw`bg-light-dark-bg`,
+                shadowStyle,
+                colorScheme === 'dark' && { shadowColor: '#000' },
+                { opacity: pressed ? 0.75 : 1 },
+              ]}
+              onPress={() => {
+                Alert.alert(
+                  'Privacy Policy',
+                  'Everything is stored on your device :)',
+                )
+              }}
+            >
+              <Ionicons
+                name="ios-document-text-outline"
+                size={24}
+                style={[
+                  tw`mr-3`,
+                  colorScheme === 'light'
+                    ? tw`text-light-aux-text`
+                    : tw`text-dark-aux-text`,
+                ]}
+              />
+              <Text
+                style={[
+                  tw`text-base`,
+                  colorScheme === 'light'
+                    ? tw`text-light-text`
+                    : tw`text-dark-text`,
+                ]}
+              >
+                Privacy Policy
+              </Text>
+            </Pressable>
           </BottomSheetScrollView>
         </View>
       </BottomSheetModal>
