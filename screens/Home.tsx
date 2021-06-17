@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import {
   Alert,
   Keyboard,
+  Platform,
   Pressable,
   SafeAreaView,
   Text,
@@ -270,10 +271,19 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
   return (
     <BottomSheetModalProvider>
       <View style={[tw`flex-1`]}>
+        {/* header */}
         <SafeAreaView
-          style={[tw`flex flex-col w-full absolute`, { top: 0, zIndex: 1 }]}
+          style={[
+            tw`flex flex-col w-full absolute`,
+            { top: 0, zIndex: 1, elevation: -1 },
+          ]}
         >
-          <View style={[tw`px-6 pt-6 flex-row justify-between`]}>
+          <View
+            style={[
+              tw`px-6 pt-6 flex-row justify-between`,
+              Platform.OS === 'android' && tw`pt-12`,
+            ]}
+          >
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -336,6 +346,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
           </View>
         </SafeAreaView>
 
+        {/* notes view */}
         <View
           style={[
             tw`flex flex-col w-full absolute`,
@@ -404,6 +415,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
                   colorScheme === 'light'
                     ? tw`text-black`
                     : tw`text-dark-text-note`,
+                  { textAlignVertical: 'top' },
                 ]}
                 returnKeyType="done"
                 blurOnSubmit
@@ -423,6 +435,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
           </PanGestureHandler>
         </View>
 
+        {/* swipe down to capture */}
         {/* eslint-disable-next-line tsc/config */}
         <PanGestureHandler onGestureEvent={onGestureEvent}>
           <Animated.View
@@ -444,6 +457,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
           </Animated.View>
         </PanGestureHandler>
 
+        {/* thought captured */}
         <Animated.View
           style={[
             tw`absolute h-full w-full flex items-center justify-center`,
@@ -463,21 +477,23 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
           </Text>
         </Animated.View>
 
-        <AnimatePresence>
-          {(noteViewZIndex > 0 || bottomSheetPresented) && (
-            <AnimatedView
-              from={{ opacity: 0 }}
-              animate={{ opacity: 0.25 }}
-              exit={{
-                opacity: 0,
-              }}
-              style={[
-                tw`absolute h-full w-full`,
-                { zIndex: 1, backgroundColor: '#000' },
-              ]}
-            />
-          )}
-        </AnimatePresence>
+        {Platform.OS === 'ios' && (
+          <AnimatePresence>
+            {(noteViewZIndex > 0 || bottomSheetPresented) && (
+              <AnimatedView
+                from={{ opacity: 0 }}
+                animate={{ opacity: 0.25 }}
+                exit={{
+                  opacity: 0,
+                }}
+                style={[
+                  tw`absolute h-full w-full`,
+                  { backgroundColor: '#000', zIndex: 1 },
+                ]}
+              />
+            )}
+          </AnimatePresence>
+        )}
       </View>
 
       <BottomSheetModal
@@ -625,8 +641,8 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
               ]}
               onPress={() => {
                 Alert.alert(
-                  'Privacy Policy',
-                  'Everything is stored on your device :)',
+                  'Coming Soon',
+                  'Export features are in the works! Follow me on Twitter @itsmnjn for updates :D',
                 )
               }}
             >
@@ -648,7 +664,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
                     : tw`text-dark-text`,
                 ]}
               >
-                Export
+                Export Notes
               </Text>
             </Pressable>
 
@@ -691,6 +707,21 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
           </BottomSheetScrollView>
         </View>
       </BottomSheetModal>
+
+      {Platform.OS === 'android' && (
+        <AnimatePresence>
+          {(noteViewZIndex > 0 || bottomSheetPresented) && (
+            <AnimatedView
+              from={{ opacity: 0 }}
+              animate={{ opacity: 0.25 }}
+              exit={{
+                opacity: 0,
+              }}
+              style={[tw`absolute h-full w-full`, { backgroundColor: '#000' }]}
+            />
+          )}
+        </AnimatePresence>
+      )}
     </BottomSheetModalProvider>
   )
 }
