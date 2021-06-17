@@ -4,7 +4,7 @@
     "slug": "Capcha",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-ios.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -14,19 +14,20 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mnjn.Capcha"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
+        "foregroundImage": "./assets/icon-android.png",
+        "backgroundColor": "#fafafa"
       },
-      "softwareKeyboardLayoutMode": "pan"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "softwareKeyboardLayoutMode": "pan",
+      "package": "com.mnjn.Capcha"
     }
   }
 }
