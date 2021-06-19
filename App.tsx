@@ -8,6 +8,8 @@ import { useState } from 'react'
 import { useEffect } from 'react'
 import { NoteStorage } from './lib/types'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import AnimatedAppLoader from './components/AnimatedAppLoader'
+import Constants from 'expo-constants'
 
 const App = (): JSX.Element => {
   const colorScheme = useColorScheme()
@@ -50,16 +52,19 @@ const App = (): JSX.Element => {
   }, [noteStorage])
 
   return (
-    <View
-      style={[
-        tw`w-full h-full`,
-        colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
-      ]}
-    >
-      <Home noteStorage={noteStorage} setNoteStorage={setNoteStorage} />
+    // eslint-disable-next-line tsc/config
+    <AnimatedAppLoader image={{ uri: Constants.manifest.splash.image }}>
+      <View
+        style={[
+          tw`w-full h-full`,
+          colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
+        ]}
+      >
+        <Home noteStorage={noteStorage} setNoteStorage={setNoteStorage} />
 
-      <StatusBar style="auto" />
-    </View>
+        <StatusBar style="auto" />
+      </View>
+    </AnimatedAppLoader>
   )
 }
 

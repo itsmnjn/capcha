@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import {
   Alert,
   Keyboard,
+  Linking,
   Platform,
   Pressable,
   SafeAreaView,
@@ -99,11 +100,11 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     // eslint-disable-next-line tsc/config
     textInputRef?.current.focus()
+    setNoteViewZIndex(2)
     noteViewOpacity.value = withTiming(1, {
       duration: 250,
       easing: Easing.out(Easing.cubic),
     })
-    setNoteViewZIndex(2)
   }
 
   const saveNewNote = () => {
@@ -665,6 +666,42 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
                 ]}
               >
                 Export Notes
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                tw`rounded-xl p-4 mb-4 flex-row items-center`,
+                colorScheme === 'light' ? tw`bg-white` : tw`bg-light-dark-bg`,
+                shadowStyle,
+                colorScheme === 'dark' && { shadowColor: '#000' },
+                { opacity: pressed ? 0.75 : 1 },
+              ]}
+              onPress={() => {
+                Linking.openURL(
+                  'mailto:eric@itsmnjn.com?subject=Capcha Support',
+                )
+              }}
+            >
+              <Ionicons
+                name="ios-help-circle"
+                size={24}
+                style={[
+                  tw`mr-3`,
+                  colorScheme === 'light'
+                    ? tw`text-light-aux-text`
+                    : tw`text-dark-aux-text`,
+                ]}
+              />
+              <Text
+                style={[
+                  tw`text-base`,
+                  colorScheme === 'light'
+                    ? tw`text-light-text`
+                    : tw`text-dark-text`,
+                ]}
+              >
+                Support
               </Text>
             </Pressable>
 
