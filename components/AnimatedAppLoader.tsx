@@ -3,9 +3,14 @@ import { Asset } from 'expo-asset'
 import Constants from 'expo-constants'
 import * as SplashScreen from 'expo-splash-screen'
 import React from 'react'
-import { Easing } from 'react-native'
-import { ImageURISource } from 'react-native'
-import { Animated, StyleSheet, View } from 'react-native'
+import {
+  Animated,
+  StyleSheet,
+  View,
+  ImageURISource,
+  Easing,
+  Image,
+} from 'react-native'
 
 interface AnimatedAppLoaderProps {
   image: ImageURISource
@@ -95,17 +100,12 @@ const AnimatedSplashScreen: React.FC<AnimatedSplashScreenProps> = ({
             },
           ]}
         >
-          <Animated.Image
+          <Image
             style={{
               width: '100%',
               height: '100%',
               // eslint-disable-next-line tsc/config
               resizeMode: Constants.manifest.splash.resizeMode || 'contain',
-              transform: [
-                {
-                  scale: animation,
-                },
-              ],
             }}
             source={image}
             onLoadEnd={onImageLoaded}

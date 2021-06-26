@@ -36,13 +36,14 @@ import { bottomSheetShadowStyle, shadowStyle } from '../lib/styles'
 import { View as AnimatedView, AnimatePresence } from 'moti'
 import { Note, NoteStorage } from '../lib/types'
 import uuid from 'uuid-random'
-import {
+import BottomSheet, {
   BottomSheetModal,
   BottomSheetModalProvider,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet'
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types'
 import { timeAgo } from '../lib/timeAgo'
+import Constants from 'expo-constants'
 
 interface HomeProps {
   noteStorage: NoteStorage | null
@@ -58,7 +59,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
   const [bottomSheetPresented, setBottomSheetPresented] = useState(false)
 
   const textInputRef = useRef()
-  const notesListBottomSheetRef = useRef<BottomSheetModal>(null)
+  const notesListBottomSheetRef = useRef<BottomSheet>(null)
   const settingsBottomSheetRef = useRef<BottomSheetModal>(null)
 
   const translateY = useSharedValue(0)
@@ -72,8 +73,8 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
 
   const springConfig = {
     mass: 1,
-    stiffness: 225,
-    damping: 19,
+    stiffness: 200,
+    damping: 20,
   }
 
   const presentBottomSheet = (
@@ -96,15 +97,12 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
   }
 
   const createNewNote = () => {
-    console.log('new note')
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    // eslint-disable-next-line tsc/config
-    textInputRef?.current.focus()
     setNoteViewZIndex(2)
-    noteViewOpacity.value = withTiming(1, {
-      duration: 250,
-      easing: Easing.out(Easing.cubic),
-    })
+    setTimeout(() => {
+      // eslint-disable-next-line tsc/config
+      textInputRef?.current.focus()
+    }, 250)
   }
 
   const saveNewNote = () => {
@@ -181,16 +179,12 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
     onEnd: ({ velocityY }) => {
       const destY = snapPoint(translateY.value, velocityY, [0])
 
-      translateY.value = withSpring(
-        destY,
-        {
-          overshootClamping: destY === 0 ? false : true,
-          restSpeedThreshold: destY === 0 ? 0.01 : 100,
-          restDisplacementThreshold: destY === 0 ? 0.01 : 100,
-          ...springConfig,
-        },
-        () => console.log('end swipe'),
-      )
+      translateY.value = withSpring(destY, {
+        overshootClamping: destY === 0 ? false : true,
+        restSpeedThreshold: destY === 0 ? 0.01 : 100,
+        restDisplacementThreshold: destY === 0 ? 0.01 : 100,
+        ...springConfig,
+      })
 
       mainTextOpacity.value = withSpring(
         0.4,
@@ -204,6 +198,10 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
       )
 
       if (translateY.value > 150) {
+        noteViewOpacity.value = withTiming(1, {
+          duration: 250,
+          easing: Easing.out(Easing.cubic),
+        })
         runOnJS(createNewNote)()
       }
     },
@@ -243,7 +241,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
           translateY: interpolate(
             translateY.value,
             [0, deviceHeight],
-            [0, 200],
+            [0, 150],
             Extrapolate.EXTEND,
           ),
         },
@@ -311,36 +309,6 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
                     ? tw`text-light-button`
                     : tw`text-dark-button`,
                   { left: 0.1, top: 0.25 },
-                ]}
-              />
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                presentBottomSheet(notesListBottomSheetRef)
-              }}
-              style={({ pressed }) => [
-                tw`rounded-full flex justify-center items-center`,
-                colorScheme === 'light'
-                  ? tw`bg-light-button-bg`
-                  : tw`bg-dark-button-bg`,
-                {
-                  width: buttonWidth,
-                  height: buttonWidth,
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}
-            >
-              <Feather
-                name="list"
-                size={24}
-                style={[
-                  tw``,
-                  colorScheme === 'light'
-                    ? tw`text-light-button`
-                    : tw`text-dark-button`,
-                  { top: 0.2 },
                 ]}
               />
             </Pressable>
@@ -439,22 +407,18 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
         {/* swipe down to capture */}
         {/* eslint-disable-next-line tsc/config */}
         <PanGestureHandler onGestureEvent={onGestureEvent}>
-          <Animated.View
-            style={[
-              tw`flex items-center justify-center flex-1`,
-              textAnimatedStyle,
-            ]}
-          >
-            <Text
+          <Animated.View style={[tw`flex items-center justify-center flex-1`]}>
+            <Animated.Text
               style={[
                 tw`text-base text-center`,
                 colorScheme === 'light'
                   ? tw`text-light-text`
                   : tw`text-dark-text`,
+                textAnimatedStyle,
               ]}
             >
               Swipe down to capture a thought.
-            </Text>
+            </Animated.Text>
           </Animated.View>
         </PanGestureHandler>
 
@@ -497,36 +461,39 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
         )}
       </View>
 
-      <BottomSheetModal
+      <BottomSheet
         // eslint-disable-next-line tsc/config
         ref={notesListBottomSheetRef}
-        onChange={(index: number) =>
-          handleBottomSheetChange(index, notesListBottomSheetRef)
-        }
-        index={1}
-        snapPoints={bottomSheetSnapPoints}
+        index={0}
+        snapPoints={['10%', '90%']}
         // eslint-disable-next-line tsc/config
-        style={[
-          tw`rounded-2xl`,
-          bottomSheetShadowStyle,
-          colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
-        ]}
+        style={[bottomSheetShadowStyle]}
         handleComponent={() => (
           <View
             style={[
-              tw``,
+              tw`flex-row justify-center items-center`,
               colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
-              { height: 20, borderTopEndRadius: 15, borderTopStartRadius: 15 },
+              colorScheme === 'light' && {
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+              },
+              {
+                height: 20,
+                opacity: 0.96,
+              },
             ]}
-          />
+          >
+            <View
+              style={[
+                tw`rounded-2xl`,
+                colorScheme === 'light' ? tw`bg-dark-bg` : tw`bg-white`,
+                { opacity: 0.4, height: 4, width: 24 },
+              ]}
+            />
+          </View>
         )}
       >
-        <View
-          style={[
-            tw`flex-1 flex-col`,
-            colorScheme === 'light' ? tw`bg-white` : tw`bg-dark-bg`,
-          ]}
-        >
+        <View style={[tw`flex-1 flex-col bg-dark-bg`, { opacity: 0.96 }]}>
           <BottomSheetScrollView
             contentContainerStyle={[
               tw`px-4 pt-2 pb-8`,
@@ -572,7 +539,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
               .reverse()}
           </BottomSheetScrollView>
         </View>
-      </BottomSheetModal>
+      </BottomSheet>
 
       <BottomSheetModal
         // eslint-disable-next-line tsc/config
@@ -629,7 +596,7 @@ const Home = ({ noteStorage, setNoteStorage }: HomeProps): JSX.Element => {
                   : tw`text-dark-aux-text`,
               ]}
             >
-              v1.0.0
+              {`v${Constants.manifest.version}`}
             </Text>
 
             <Pressable

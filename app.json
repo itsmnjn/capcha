@@ -14,9 +14,7 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mnjn.Capcha"
@@ -27,7 +25,8 @@
         "backgroundColor": "#fafafa"
       },
       "softwareKeyboardLayoutMode": "pan",
-      "package": "com.mnjn.Capcha"
+      "package": "com.mnjn.Capcha",
+      "permissions": []
     }
   }
 }
